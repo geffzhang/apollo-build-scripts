@@ -29,9 +29,10 @@ eureka_service_url=$config_server_url/eureka/
 portal_url=http://localhost:8070
 
 # JAVA OPTS
-BASE_JAVA_OPTS="-Denv=dev -Ddev_meta=$config_server_url"
+BASE_JAVA_OPTS="-Denv=dev"
+CLIENT_JAVA_OPTS="$BASE_JAVA_OPTS -Dapollo.meta=$config_server_url"
 SERVER_JAVA_OPTS="$BASE_JAVA_OPTS -Dspring.profiles.active=github -Deureka.service.url=$eureka_service_url"
-PORTAL_JAVA_OPTS="$BASE_JAVA_OPTS -Dspring.profiles.active=github,auth"
+PORTAL_JAVA_OPTS="$BASE_JAVA_OPTS -Ddev_meta=$config_server_url -Dspring.profiles.active=github,auth"
 
 # executable
 JAR_FILE=apollo-all-in-one.jar
@@ -80,7 +81,7 @@ function checkServerAlive {
 
   SERVER_URL="$1"
 
-  until [[ (( counter -ge max_counter )) || "$(curl -X GET --silent --connect-timeout 1 --head $SERVER_URL | grep "Coyote")" != "" ]];
+  until [[ (( counter -ge max_counter )) || "$(curl -X GET --silent --connect-timeout 1 --max-time 2 --head $SERVER_URL | grep "HTTP")" != "" ]];
   do
     printf "."
     counter+=1
@@ -179,9 +180,9 @@ if [ "$1" = "start" ] ; then
   exit 0;
 elif [ "$1" = "client" ] ; then
   if [ "$windows" == "1" ]; then
-    java -classpath "$CLIENT_DIR;$CLIENT_JAR" $BASE_JAVA_OPTS SimpleApolloConfigDemo
+    java -classpath "$CLIENT_DIR;$CLIENT_JAR" $CLIENT_JAVA_OPTS com.ctrip.framework.apollo.demo.api.SimpleApolloConfigDemo
   else
-    java -classpath $CLIENT_DIR:$CLIENT_JAR $BASE_JAVA_OPTS SimpleApolloConfigDemo
+    java -classpath $CLIENT_DIR:$CLIENT_JAR $CLIENT_JAVA_OPTS com.ctrip.framework.apollo.demo.api.SimpleApolloConfigDemo
   fi
 
 elif [ "$1" = "stop" ] ; then
